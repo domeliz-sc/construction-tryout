@@ -1,0 +1,9 @@
+{
+  // Static site served by Cloudflare Workers (no server code)
+  "name": "construction-tryout",
+  "compatibility_date": "2026-10-24",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  }
+}

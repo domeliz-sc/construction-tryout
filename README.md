@@ -6,9 +6,9 @@ Astro website + Sanity CMS, hosted on Cloudflare.
 - Admin panel: `/studio` (Sanity Studio embedded in the site)
 - Sanity project: `9sbj6aed`, dataset `production`
 
-## Cloudflare Pages settings
+## Cloudflare (Workers Builds)
 - Build command: `npm run build`
-- Output directory: `dist`
+- Deploy command: `npx wrangler deploy` (uses `wrangler.jsonc`, serves `dist/`)
 
 ## Publishing flow
 Publish in /studio → Sanity webhook → Cloudflare deploy hook → site rebuilds.

@@ -7,7 +7,7 @@ export function img(source: any) {
   return builder.image(source).auto('format');
 }
 
-// Fetch from Sanity. On Cloudflare (CF_PAGES is set) a failure stops the build,
+// Fetch from Sanity. On Cloudflare builds (CF_PAGES or WORKERS_CI is set) a failure stops the build,
 // so a broken connection never publishes an empty site. Locally it falls back
 // to the given value so the site can still be previewed without content.
 export async function load<T>(query: string, fallback: T, params: Record<string, unknown> = {}): Promise<T> {
@@ -15,7 +15,7 @@ export async function load<T>(query: string, fallback: T, params: Record<string,
     const result = await sanityClient.fetch<T>(query, params);
     return result ?? fallback;
   } catch (err) {
-    if (process.env.CF_PAGES) throw err;
+    if (process.env.CF_PAGES || process.env.WORKERS_CI) throw err;
     console.warn(`[sanity] Could not reach Sanity, using empty content: ${(err as Error).message}`);
     return fallback;
   }
