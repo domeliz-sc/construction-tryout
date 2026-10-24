@@ -1,0 +1,62 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import CallBand from '../../components/CallBand.astro';
+import { load, projectFields } from '../../lib/sanity';
+
+const projects = await load<any[]>(
+  `*[_type == "project" && defined(slug.current)] | order(completed desc){ ${projectFields} }`,
+  [],
+);
+const categories = [...new Set(projects.map((p) => p.category).filter(Boolean))];
+---
+<Base title="Projects">
+  <section class="wrap page-head">
+    <p class="label">Portfolio</p>
+    <h1 class="display">Projects</h1>
+    {categories.length > 1 && (
+      <div class="filters" role="group" aria-label="Filter by type of work">
+        <button type="button" class="chip" aria-pressed="true" data-filter="">All</button>
+        {categories.map((c) => <button type="button" class="chip" aria-pressed="false" data-filter={c}>{c}</button>)}
+      </div>
+    )}
+  </section>
+
+  <section class="wrap">
+    {projects.length ? (
+      <div class="grid" id="project-grid">{projects.map((p) => <ProjectCard p={p} />)}</div>
+    ) : (
+      <p class="muted empty">No projects yet. Add your first one in the Studio.</p>
+    )}
+  </section>
+
+  <div class="spacer"></div>
+  <CallBand />
+</Base>
+
+<script>
+  const chips = document.querySelectorAll<HTMLButtonElement>('.chip');
+  const cards = document.querySelectorAll<HTMLElement>('#project-grid .card');
+  chips.forEach((chip) =>
+    chip.addEventListener('click', () => {
+      const f = chip.dataset.filter;
+      chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+      cards.forEach((card) => {
+        card.hidden = !!f && card.dataset.category !== f;
+      });
+    }),
+  );
+</script>
+
+<style>
+  .page-head { padding-top: clamp(32px, 6vw, 72px); padding-bottom: 32px; }
+  .page-head h1 { font-size: clamp(48px, 9vw, 128px); margin-top: 12px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+  .chip { font: inherit; font-weight: 600; padding: 8px 16px; border: 2px solid var(--ink); background: transparent; cursor: pointer; }
+  .chip[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(20px, 3vw, 36px) clamp(16px, 2.5vw, 28px); }
+  .empty { padding: 32px 0; }
+  .spacer { height: clamp(48px, 8vw, 96px); }
+  @media (max-width: 960px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+</style>

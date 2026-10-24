@@ -1,0 +1,163 @@
+---
+import { load, settingsQuery, type Settings } from '../lib/sanity';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const { title, description } = Astro.props;
+const s = await load<Settings>(settingsQuery, {});
+const company = s.companyName || 'Your Company';
+const pageTitle = title ? `${title} | ${company}` : company;
+const path = Astro.url.pathname;
+const nav = [
+  { href: '/projects/', label: 'Projects' },
+  { href: '/#services', label: 'Services' },
+  { href: '/contact/', label: 'Contact' },
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description || s.intro || `${company}: construction projects and services.`} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-row">
+        <a class="brand" href="/">{company}</a>
+        <nav aria-label="Main">
+          <ul>
+            {nav.map((n) => (
+              <li><a href={n.href} aria-current={path.startsWith(n.href) && n.href !== '/#services' ? 'page' : undefined}>{n.label}</a></li>
+            ))}
+          </ul>
+        </nav>
+        {s.phone && <a class="header-call" href={`tel:${s.phone.replace(/\s/g, '')}`}>{s.phone}</a>}
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-grid">
+        <div>
+          <p class="footer-brand">{company}</p>
+          {s.address && <p class="muted pre">{s.address}</p>}
+        </div>
+        <ul class="footer-links">
+          {s.phone && <li><a href={`tel:${s.phone.replace(/\s/g, '')}`}>{s.phone}</a></li>}
+          {s.whatsapp && <li><a href={`https://wa.me/${s.whatsapp.replace(/\D/g, '')}`}>WhatsApp</a></li>}
+          {s.email && <li><a href={`mailto:${s.email}`}>{s.email}</a></li>}
+        </ul>
+        <p class="muted small">© {new Date().getFullYear()} {company}</p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --paper: #efece6;
+    --paper-2: #e4e0d8;
+    --ink: #151513;
+    --ink-2: #4a4843;
+    --line: #cfcac0;
+    --mark: #f2b705;
+    --wrap: 1240px;
+    --gutter: clamp(16px, 4vw, 40px);
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Archivo', system-ui, sans-serif;
+    font-variation-settings: 'wdth' 100;
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid var(--mark);
+    outline-offset: 3px;
+  }
+  .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 var(--gutter); }
+  .skip { position: absolute; left: -999px; }
+  .skip:focus { left: 16px; top: 16px; background: var(--ink); color: var(--paper); padding: 8px 12px; z-index: 10; }
+  .muted { color: var(--ink-2); }
+  .small { font-size: 14px; }
+  .pre { white-space: pre-line; }
+
+  /* Display type: wide and heavy, like site hoarding lettering */
+  .display {
+    font-variation-settings: 'wdth' 125;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .label {
+    font-variation-settings: 'wdth' 75;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 13px;
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 22px; border: 2px solid var(--ink);
+    font-weight: 700; text-decoration: none; font-size: 16px;
+    background: var(--ink); color: var(--paper);
+    transition: transform .15s ease, background .15s ease, color .15s ease;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.ghost { background: transparent; color: var(--ink); }
+  .btn.ghost:hover { background: var(--ink); color: var(--paper); }
+  .btn.mark { background: var(--mark); border-color: var(--mark); color: var(--ink); }
+
+  /* Header */
+  .site-header { border-bottom: 2px solid var(--ink); background: var(--paper); position: sticky; top: 0; z-index: 5; }
+  .header-row { display: flex; align-items: center; gap: 24px; min-height: 68px; }
+  .brand { font-variation-settings: 'wdth' 125; font-weight: 800; text-decoration: none; font-size: 20px; letter-spacing: -0.01em; }
+  .site-header nav { margin-left: auto; }
+  .site-header ul { display: flex; gap: 22px; list-style: none; margin: 0; padding: 0; }
+  .site-header nav a { text-decoration: none; font-weight: 600; }
+  .site-header nav a:hover, .site-header nav a[aria-current] { text-decoration: underline; text-decoration-thickness: 3px; text-decoration-color: var(--mark); text-underline-offset: 6px; }
+  .header-call { font-weight: 700; text-decoration: none; padding: 8px 14px; background: var(--mark); }
+
+  /* Footer */
+  .site-footer { background: var(--ink); color: var(--paper); margin-top: 0; padding: 56px 0 40px; }
+  .site-footer .muted { color: #b5b1a8; }
+  .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 32px; align-items: start; }
+  .footer-brand { font-variation-settings: 'wdth' 125; font-weight: 800; font-size: 24px; margin: 0 0 8px; }
+  .footer-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+
+  @media (max-width: 760px) {
+    .header-row { flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; gap: 10px 18px; }
+    .site-header nav { margin-left: 0; order: 3; width: 100%; }
+    .site-header ul { gap: 18px; }
+    .header-call { margin-left: auto; }
+    .site-header { position: static; }
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>

@@ -1,0 +1,97 @@
+---
+import Base from '../../layouts/Base.astro';
+import CallBand from '../../components/CallBand.astro';
+import { load, img, formatDate } from '../../lib/sanity';
+
+export async function getStaticPaths() {
+  const projects = await load<any[]>(
+    `*[_type == "project" && defined(slug.current)]{
+      title, "slug": slug.current, location, category, completed, summary, cover,
+      gallery[]{ ..., asset->{ _id, metadata { dimensions } } }
+    }`,
+    [],
+  );
+  return projects.map((p) => ({ params: { slug: p.slug }, props: { p } }));
+}
+
+const { p } = Astro.props;
+const facts = [
+  ['Location', p.location],
+  ['Type of work', p.category],
+  ['Completed', formatDate(p.completed)],
+].filter(([, v]) => v);
+---
+<Base title={p.title} description={p.summary}>
+  <article>
+    <header class="wrap proj-head">
+      <a class="back" href="/projects/">← All projects</a>
+      <h1 class="display">{p.title}</h1>
+      {facts.length > 0 && (
+        <dl class="facts">
+          {facts.map(([k, v]) => (
+            <div><dt class="label">{k}</dt><dd>{v}</dd></div>
+          ))}
+        </dl>
+      )}
+    </header>
+
+    {p.cover && (
+      <figure class="cover">
+        <img
+          src={img(p.cover).width(2000).height(1100).fit('crop').url()}
+          srcset={`${img(p.cover).width(1000).height(550).fit('crop').url()} 1000w, ${img(p.cover).width(2000).height(1100).fit('crop').url()} 2000w`}
+          sizes="100vw"
+          alt={p.cover.alt || p.title}
+          width="2000"
+          height="1100"
+          fetchpriority="high"
+        />
+      </figure>
+    )}
+
+    {p.summary && (
+      <div class="wrap summary">
+        <p>{p.summary}</p>
+      </div>
+    )}
+
+    {p.gallery?.length > 0 && (
+      <section class="wrap gallery" aria-label="Gallery">
+        {p.gallery.map((g: any) => {
+          const d = g.asset?.metadata?.dimensions;
+          const w = 1000;
+          const h = d ? Math.round((w * d.height) / d.width) : 750;
+          return (
+            <figure>
+              <a href={img(g).width(2400).fit('max').url()}>
+                <img src={img(g).width(w).url()} alt={g.alt || g.caption || p.title} width={w} height={h} loading="lazy" />
+              </a>
+              {g.caption && <figcaption class="muted">{g.caption}</figcaption>}
+            </figure>
+          );
+        })}
+      </section>
+    )}
+  </article>
+  <div class="spacer"></div>
+  <CallBand />
+</Base>
+
+<style>
+  .proj-head { padding-top: clamp(28px, 5vw, 56px); padding-bottom: 32px; }
+  .back { font-weight: 600; text-decoration: none; }
+  .back:hover { text-decoration: underline; text-decoration-color: var(--mark); text-decoration-thickness: 3px; }
+  .proj-head h1 { font-size: clamp(40px, 7vw, 96px); margin: 20px 0 28px; max-width: 16ch; }
+  .facts { display: flex; flex-wrap: wrap; gap: 12px 48px; margin: 0; border-top: 2px solid var(--ink); padding-top: 16px; }
+  .facts dd { margin: 4px 0 0; font-weight: 600; font-size: 18px; }
+  .cover { margin: 0; }
+  .cover img { width: 100%; max-height: 82vh; object-fit: cover; }
+  .summary { padding-top: clamp(32px, 5vw, 56px); padding-bottom: clamp(16px, 3vw, 32px); }
+  .summary p { font-size: clamp(20px, 2vw, 26px); line-height: 1.45; max-width: 36ch; margin: 0; white-space: pre-line; }
+  .gallery { columns: 2; column-gap: clamp(16px, 2.5vw, 28px); padding-top: 16px; }
+  .gallery figure { break-inside: avoid; margin: 0 0 clamp(16px, 2.5vw, 28px); }
+  .gallery img { width: 100%; height: auto; }
+  .gallery figcaption { font-size: 14px; margin-top: 6px; }
+  .spacer { height: clamp(48px, 8vw, 96px); }
+  @media (max-width: 640px) { .gallery { columns: 1; } }
+</style>

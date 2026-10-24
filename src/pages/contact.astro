@@ -1,0 +1,61 @@
+---
+import Base from '../layouts/Base.astro';
+import { load, settingsQuery, type Settings } from '../lib/sanity';
+const s = await load<Settings>(settingsQuery, {});
+---
+<Base title="Request a quote">
+  <section class="wrap contact">
+    <div>
+      <p class="label">Contact</p>
+      <h1 class="display">Request a quote</h1>
+      <p class="muted lead">Tell us about your project and we'll get back to you.</p>
+      <ul class="ways">
+        {s.phone && <li><span class="label">Call</span><a href={`tel:${s.phone.replace(/\s/g, '')}`}>{s.phone}</a></li>}
+        {s.whatsapp && <li><span class="label">WhatsApp</span><a href={`https://wa.me/${s.whatsapp.replace(/\D/g, '')}`}>Message us</a></li>}
+        {s.email && <li><span class="label">Email</span><a href={`mailto:${s.email}`}>{s.email}</a></li>}
+        {s.address && <li><span class="label">Office</span><span class="pre">{s.address}</span></li>}
+      </ul>
+      {!s.phone && !s.email && <p class="muted">Add your phone and email in the Studio under Company settings.</p>}
+    </div>
+
+    {s.email ? (
+      <form class="quote" id="quote" data-email={s.email}>
+        <label>Your name<input name="name" required autocomplete="name" /></label>
+        <label>Phone<input name="phone" type="tel" autocomplete="tel" /></label>
+        <label>Type of work
+          <select name="type">
+            <option>New build</option><option>Renovation</option><option>Commercial</option><option>Other</option>
+          </select>
+        </label>
+        <label>About the project<textarea name="message" rows="5" required></textarea></label>
+        <button class="btn mark" type="submit">Send request</button>
+        <p class="muted small">This opens your email app with the details filled in.</p>
+      </form>
+    ) : null}
+  </section>
+</Base>
+
+<script>
+  const form = document.getElementById('quote') as HTMLFormElement | null;
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const d = new FormData(form);
+    const body = `Name: ${d.get('name')}\nPhone: ${d.get('phone')}\nType of work: ${d.get('type')}\n\n${d.get('message')}`;
+    const subject = `Quote request: ${d.get('type')}`;
+    window.location.href = `mailto:${form.dataset.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
+</script>
+
+<style>
+  .contact { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 6vw, 80px); padding-top: clamp(32px, 6vw, 72px); padding-bottom: clamp(56px, 8vw, 112px); }
+  h1 { font-size: clamp(44px, 7vw, 96px); margin-top: 12px; }
+  .lead { font-size: 20px; margin: 24px 0 32px; }
+  .ways { list-style: none; padding: 0; margin: 0; border-top: 2px solid var(--ink); }
+  .ways li { display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .ways a { font-weight: 700; font-size: 19px; }
+  .quote { display: grid; gap: 18px; align-content: start; background: var(--paper-2); padding: clamp(20px, 3vw, 36px); border: 2px solid var(--ink); }
+  .quote label { display: grid; gap: 6px; font-weight: 600; }
+  .quote input, .quote select, .quote textarea { font: inherit; padding: 12px; border: 2px solid var(--ink); background: var(--paper); border-radius: 0; }
+  .quote .btn { justify-self: start; }
+  @media (max-width: 820px) { .contact { grid-template-columns: 1fr; } }
+</style>
